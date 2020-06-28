@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flippo/core/provider/image_upload_provider.dart';
+import 'package:flippo/core/provider/likes_provider.dart';
 import 'package:flippo/core/service/auth_service.dart';
 import 'package:flippo/ui/shared/constant.dart';
 import 'package:flippo/ui/view/home_screen.dart';
@@ -16,8 +17,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => ImageUploadProvider(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ImageUploadProvider()),
+        ChangeNotifierProvider(create: (_) => LikesProvider()),
+      ],
       child: MaterialApp(
         title: 'Flippo Project',
         theme: ThemeData(

@@ -3,10 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flippo/core/enums/view_state.dart';
 import 'package:flippo/core/model/post.dart';
 import 'package:flippo/core/provider/image_upload_provider.dart';
+import 'package:flippo/core/provider/likes_provider.dart';
 import 'package:flippo/ui/shared/constant.dart';
 import 'package:flippo/ui/shared/widgets/story_view.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
 class FeedScreen extends StatefulWidget {
@@ -15,16 +17,15 @@ class FeedScreen extends StatefulWidget {
 }
 
 class _FeedScreenState extends State<FeedScreen> {
-  ImageUploadProvider _imageUploadProvider = ImageUploadProvider();
   final CollectionReference _postCollection = _firestore.collection("post");
   static final Firestore _firestore = Firestore.instance;
-  bool isLiked = false;
 
   final String noImageAvailable =
       "https://www.esm.rochester.edu/uploads/NoPhotoAvailable.jpg";
 
   @override
   Widget build(BuildContext context) {
+    var _imageUploadProvider = Provider.of<ImageUploadProvider>(context);
     var deviceSize = MediaQuery.of(context).size;
     return StreamBuilder(
         stream:
@@ -33,29 +34,34 @@ class _FeedScreenState extends State<FeedScreen> {
           if (!snapshot.hasData) {
             return Center(child: CircularProgressIndicator());
           }
-          if (_imageUploadProvider.getViewState == ViewState.LOADING) {
-            return LinearProgressIndicator();
-          }
+
           return ListView.builder(
-            itemCount: snapshot.data.documents.length,
-            itemBuilder: (context, index) => index == 0
-                ? Padding(
+              itemCount: snapshot.data.documents.length,
+              itemBuilder: (context, index) {
+                if (index == 0) {
+                  return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 5.0),
                     child: SizedBox(
                       height: deviceSize.height * 0.10,
                       child: StoryView(),
                     ),
-                  )
-                : feed(snapshot.data.documents[index], context),
-          );
+                  );
+                } else {
+                  return feed(snapshot.data.documents[index], context,
+                      _imageUploadProvider);
+                }
+              });
         });
   }
 
-  Widget feed(DocumentSnapshot snapshot, BuildContext context) {
+  Widget feed(DocumentSnapshot snapshot, BuildContext context,
+      ImageUploadProvider _imageUploadProvider) {
+    var likesProvider = Provider.of<LikesProvider>(context);
     Post post = Post.fromMap(snapshot.data);
     var deviceSize = MediaQuery.of(context).size;
 
     return Container(
+      key: UniqueKey(),
       color: Color(0xffF0F2FF),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
@@ -121,7 +127,7 @@ class _FeedScreenState extends State<FeedScreen> {
                 bottom: deviceSize.height * 0.19,
                 right: deviceSize.width * 0.02,
                 child: IconButton(
-                  icon: !isLiked
+                  icon: !likesProvider.isLiked
                       ? Icon(
                           FontAwesomeIcons.heart,
                           color: Colors.white,
@@ -133,7 +139,7 @@ class _FeedScreenState extends State<FeedScreen> {
                           size: 35.0,
                         ),
                   onPressed: () {
-                    toggleLike(post);
+                    likesProvider.incrementLikes(post);
                   },
                 ),
               )
@@ -197,6 +203,9 @@ class _FeedScreenState extends State<FeedScreen> {
             ),
           ),
           SizedBox(height: 10.0),
+          _imageUploadProvider.getViewState == ViewState.LOADING
+              ? LinearProgressIndicator()
+              : Container(),
         ],
       ),
     );
@@ -213,23 +222,5 @@ class _FeedScreenState extends State<FeedScreen> {
         duration: Duration(seconds: 1),
       ),
     );
-  }
-
-  toggleLike(Post post) {
-    if (!isLiked) {
-      setState(() {
-        _postCollection
-            .document(post.postId)
-            .updateData({"likes": ++post.likes});
-        isLiked = true;
-      });
-    } else {
-      setState(() {
-        _postCollection
-            .document(post.postId)
-            .updateData({"likes": --post.likes});
-        isLiked = false;
-      });
-    }
   }
 }

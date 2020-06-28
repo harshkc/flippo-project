@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flare_flutter/flare_actor.dart';
 import 'package:flare_flutter/flare_controls.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
 enum AnimationToPlay {
   Activate,
@@ -23,7 +24,6 @@ class SmartFlareAnimation extends StatefulWidget {
 }
 
 class _SmartFlareAnimationState extends State<SmartFlareAnimation> {
-  ImageUploadProvider _imageUploadProvider = ImageUploadProvider();
   StorageService _storageService = StorageService();
   AuthMethods _authMethods = AuthMethods();
   String _currentUserId;
@@ -55,24 +55,25 @@ class _SmartFlareAnimationState extends State<SmartFlareAnimation> {
 
   bool isOpen = false;
 
-  void pickImage({@required ImageSource source}) async {
-    File selectedImage = await FileUtils.pickImage(source: source);
-    selectedImage != null
-        ? _storageService.uploadImage(
-            postId: user.name +
-                "%${Random().nextInt(1000)}#${Random().nextInt(100)}&${Random().nextInt(1000)}",
-            imageFile: selectedImage,
-            userId: _currentUserId,
-            name: user.name,
-            profilePhoto: user.profilePhoto,
-            imageUploadProvider: _imageUploadProvider,
-            likes: 0,
-          )
-        : print("User returned");
-  }
-
   @override
   Widget build(BuildContext context) {
+    var _imageUploadProvider = Provider.of<ImageUploadProvider>(context);
+    void pickImage({@required ImageSource source}) async {
+      File selectedImage = await FileUtils.pickImage(source: source);
+      selectedImage != null
+          ? _storageService.uploadImage(
+              postId: user.name +
+                  "%${Random().nextInt(1000)}#${Random().nextInt(100)}&${Random().nextInt(1000)}",
+              imageFile: selectedImage,
+              userId: _currentUserId,
+              name: user.name,
+              profilePhoto: user.profilePhoto,
+              imageUploadProvider: _imageUploadProvider,
+              likes: 0,
+            )
+          : print("User returned");
+    }
+
     return Container(
       width: AnimationWidth,
       height: AnimationHeight,
