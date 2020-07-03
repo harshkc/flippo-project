@@ -55,8 +55,7 @@ class _StoryCircleState extends State<StoryCircle>
               padding: EdgeInsets.all(5.0),
               child: CircleAvatar(
                 radius: 30.0,
-                backgroundImage: NetworkImage(
-                    "https://lh3.googleusercontent.com/2xa-OvWcgtIciyLgy3WvO2MiLg6DCXbirRNN3hJbedkvt7kNt8W93GVUr_0hCaZFfS8"),
+                backgroundImage: AssetImage("assets/momento.PNG"),
               ),
             ),
           ),
